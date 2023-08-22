@@ -8,6 +8,7 @@ gitpython = "*"
 jsonschema = "*"
 python-gitlab = "*"
 giturlparse = "*"
+pyyaml = "*"
 
 [dev-packages]
 black = "*"
