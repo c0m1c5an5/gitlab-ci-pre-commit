@@ -1,0 +1,20 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+gitpython = "*"
+jsonschema = "*"
+python-gitlab = "*"
+giturlparse = "*"
+
+[dev-packages]
+black = "*"
+mypy = "*"
+isort = "*"
+pytest = "*"
+pytest-cov = "*"
+
+[requires]
+python_version = "3.11"

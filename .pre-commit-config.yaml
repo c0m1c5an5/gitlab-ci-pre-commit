@@ -1,0 +1,28 @@
+default_install_hook_types: ["pre-commit", "commit-msg"]
+repos:
+  - repo: https://github.com/pycqa/isort
+    rev: 5.12.0
+    hooks:
+      - id: isort
+        args: ["--profile", "black"]
+  - repo: https://github.com/psf/black
+    rev: 23.3.0
+    hooks:
+      - id: black
+  - repo: https://github.com/PyCQA/flake8
+    rev: 6.0.0
+    hooks:
+      - id: flake8
+        args: ["--max-line-length", "120"]
+  - repo: local
+    hooks:
+      - id: pipenv-requirements
+        name: pipenv-requirements
+        files: Pipfile\.lock
+        language: system
+        pass_filenames: false
+        entry: sh -c 'pipenv requirements > requirements.txt'
+  - repo: https://github.com/jorisroovers/gitlint
+    rev: v0.19.1
+    hooks:
+      - id: gitlint

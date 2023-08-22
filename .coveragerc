@@ -1,0 +1,8 @@
+[run]
+branch = true
+relative_files = true
+omit =
+    */exceptions.py
+
+[report]
+show_missing = true

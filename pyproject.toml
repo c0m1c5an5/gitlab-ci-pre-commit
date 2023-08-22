@@ -1,0 +1,21 @@
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "--cov"
+testpaths = ["tests"]
+pythonpath = ["."]
+
+[project]
+name = "gitlab-ci-precommit"
+version = "1.0.0"
+dynamic = ["dependencies"]
+
+[tool.setuptools.dynamic]
+dependencies = { file = ["requirements.txt"] }
+
+[project.scripts]
+gitlab-ci-lint = "gitlab_ci_lint.cli:cli"
+gitlab-ci-fmt = "gitlab_ci_fmt.cli:cli"
+gitlab-ci-shellcheck = "gitlab_ci_shellcheck.cli:cli"
+
+[tool.setuptools]
+packages = ["gitlab_ci_lint", "gitlab_ci_fmt", "gitlab_ci_shellcheck"]

@@ -1,0 +1,26 @@
+- id: gitlab-ci-lint
+  name: "Lint gitlab-ci config"
+  description: "Lint gitlab-ci config using gitlab api."
+  entry: gitlab_ci_lint
+  language: python
+  language_version: python3.11
+  files: ^.*\.gitlab-ci.yml$
+  types: [yaml]
+
+- id: gitlab-ci-fmt
+  name: "Format gitlab-ci config"
+  description: "Format gitlab-ci config by enforcing strict keyword ordering."
+  entry: gitlab_ci_fmt
+  language: python
+  language_version: python3.11
+  files: ^.*\.gitlab-ci.yml$
+  types: [yaml]
+
+- id: gitlab-ci-shellcheck
+  name: "Shellcheck gitlab-ci scripts"
+  description: "Shellcheck gitlab-ci scripts for errors."
+  entry: gitlab_ci_shellcheck
+  language: python
+  language_version: python3.11
+  files: ^.*\.gitlab-ci.yml$
+  types: [yaml]
