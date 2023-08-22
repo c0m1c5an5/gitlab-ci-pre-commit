@@ -75,7 +75,7 @@ def cli(argv: list[str] = sys.argv[1:]) -> int:
             lint_gitlab_api(project, yml)
         except GitlabCiLintError as e:
             print(
-                f"Error: Linting of file '{str(file)}' failed:\n{e.error_message}",
+                f"Error: Linting of file '{str(file)}' failed: {e.error_message}",
                 file=sys.stderr,
             )
             return 1

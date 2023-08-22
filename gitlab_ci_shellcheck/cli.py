@@ -69,7 +69,13 @@ def cli(argv: list[str] = sys.argv[1:]) -> int:
                     data = yaml.safe_load(stream)
             except YAMLError as e:
                 print(
-                    f"Error: Failed load yaml file '{str(file)}': {str(e)}",
+                    f"Error: Failed load yaml file '{str(file)}':\n{str(e)}",
+                    file=sys.stderr,
+                )
+                return 1
+            except OSError as e:
+                print(
+                    f"Error: Failed to read file '{str(file)}': {e.strerror}",
                     file=sys.stderr,
                 )
                 return 1
@@ -94,7 +100,7 @@ def cli(argv: list[str] = sys.argv[1:]) -> int:
                                     tf.flush()
                             except OSError as e:
                                 print(
-                                    f"Error: Failed to write file '{str(file)}': {e.strerror}",
+                                    f"Error: Failed to write file '{str(temp_file)}': {e.strerror}",
                                     file=sys.stderr,
                                 )
                                 return 1
