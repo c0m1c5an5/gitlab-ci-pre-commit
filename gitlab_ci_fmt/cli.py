@@ -3,11 +3,19 @@ import sys
 from pathlib import Path
 from typing import List
 
-from gitlab_ci_fmt.exceptions import FormatError, YqNotFoundError, YqVersionError
-from gitlab_ci_fmt.utils import check_yq, format_gitlab_ci
+from gitlab_ci_fmt.exceptions import Error
+from gitlab_ci_fmt.utils import check_yq, format_gitlab_ci, print_err
 
 
 def cli(argv: List[str] = sys.argv[1:]) -> int:
+    """GitLab CI format cli.
+
+    Args:
+        argv (List[str], optional): Input arguments. Defaults to sys.argv[1:].
+
+    Returns:
+        int: Return code
+    """
     parser = argparse.ArgumentParser(
         description="Format gitlab-ci files.", prog=__package__
     )
@@ -18,13 +26,9 @@ def cli(argv: List[str] = sys.argv[1:]) -> int:
 
     try:
         check_yq()
-    except YqNotFoundError as e:
-        print(f"Error: yq not found: {str(e)}", file=sys.stderr)
-        print("Use yq v4.x.x (https://github.com/mikefarah/yq)", file=sys.stderr)
-        return 1
-    except YqVersionError as e:
-        print(f"Error: yq version incompatible: {str(e)}", file=sys.stderr)
-        print("Use yq v4.x.x (https://github.com/mikefarah/yq)", file=sys.stderr)
+    except Error as e:
+        print_err(f"Error: yq not found: {e!s}")
+        print_err("Use yq v4.x.x (https://github.com/mikefarah/yq)")
         return 1
 
     for file in files:
@@ -32,18 +36,13 @@ def cli(argv: List[str] = sys.argv[1:]) -> int:
             with file.open("r") as f:
                 source = f.read()
         except OSError as e:
-            print(
-                f"Error: Failed to read file '{str(file)}': {e.strerror}",
-                file=sys.stderr,
-            )
+            print_err(f"Error: Failed to read file '{file!s}': {e.strerror}")
             return 1
 
         try:
             result = format_gitlab_ci(source)
-        except FormatError as e:
-            print(
-                f"Error: Failed to format file '{str(file)}': {str(e)}", file=sys.stderr
-            )
+        except Error as e:
+            print_err(f"Error: Failed to format file '{file!s}': {e!s}")
             return 1
 
         try:
@@ -51,10 +50,7 @@ def cli(argv: List[str] = sys.argv[1:]) -> int:
                 with file.open("w") as f:
                     f.write(result)
         except OSError as e:
-            print(
-                f"Error: Failed to write file '{str(file)}': {e.strerror}",
-                file=sys.stderr,
-            )
+            print_err(f"Error: Failed to write file '{file!s}': {e.strerror}")
             return 1
 
     return 0

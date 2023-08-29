@@ -2,9 +2,7 @@ class Error(Exception):
     pass
 
 
-class GitlabProjectError(Error):
-    pass
-
-
 class RemoteParseError(Error):
-    pass
+    def __init__(self, remote: str) -> None:
+        message = f"Failed to parse remote '{remote}' as git url"
+        super().__init__(message)
