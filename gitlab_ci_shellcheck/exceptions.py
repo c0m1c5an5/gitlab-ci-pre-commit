@@ -2,7 +2,11 @@ class Error(Exception):
     pass
 
 
-class ShellcheckNotFoundError(Error):
-    def __init__(self, rc: int, err: str) -> None:
-        message = f"Shellcheck not found [{rc}]: {err!r}"
+class CommandError(Error):
+    def __init__(self, err: str) -> None:
+        message = err
         super().__init__(message)
+
+
+class ShellcheckNotFoundError(CommandError):
+    pass

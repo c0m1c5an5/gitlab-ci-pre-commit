@@ -5,6 +5,8 @@
 # PLR0915 Too many statements
 
 import argparse
+import logging
+import os
 import subprocess
 import sys
 import uuid
@@ -16,7 +18,10 @@ import yaml
 from yaml import YAMLError
 
 from gitlab_ci_shellcheck.exceptions import ShellcheckNotFoundError
-from gitlab_ci_shellcheck.utils import check_shellcheck, print_err
+from gitlab_ci_shellcheck.utils import check_shellcheck
+
+logging.basicConfig(format="%(levelname)s: %(filename)s:%(lineno)d %(message)s")
+logger = logging.getLogger(__name__)
 
 
 def cli(argv: list[str] = sys.argv[1:]) -> int:
@@ -26,12 +31,12 @@ def cli(argv: list[str] = sys.argv[1:]) -> int:
         argv (List[str], optional): Input arguments. Defaults to sys.argv[1:].
 
     Returns:
-        int: Return code
+        int: Return code.
     """
     parser = argparse.ArgumentParser(
-        description="ShelllCheck gitlab-ci formatted yaml file.", prog=__package__
+        description="ShelllCheck gitlab-ci formatted yaml file.",
+        prog="gitlab-ci-fmt",
     )
-
     parser.add_argument(
         "files",
         type=Path,
@@ -39,7 +44,6 @@ def cli(argv: list[str] = sys.argv[1:]) -> int:
         default=[".gitlab-ci.yml"],
         help="files to check",
     )
-
     parser.add_argument(
         "-S",
         "--severity",
@@ -48,7 +52,6 @@ def cli(argv: list[str] = sys.argv[1:]) -> int:
         choices=["error", "warning", "info", "style"],
         help="minimum severity of errors to consider",
     )
-
     parser.add_argument(
         "-C",
         "--color",
@@ -57,40 +60,50 @@ def cli(argv: list[str] = sys.argv[1:]) -> int:
         choices=["auto", "always", "never"],
         help="use color",
     )
+    parser.add_argument(
+        "-v", "--verbose", action="store_true", default=False, help="verbose output"
+    )
 
     args = parser.parse_args(argv)
     files: List[Path] = args.files
     color: bool = args.color
     severity = args.severity
+    verbose: bool = args.verbose
+
+    if verbose or os.environ.get("DEBUG") not in [None, "false", "no", "0"]:
+        logger.setLevel(logging.DEBUG)
+
+    logger.debug(f"Args: {args._get_kwargs()}")
 
     try:
         check_shellcheck()
     except ShellcheckNotFoundError as e:
-        print_err(f"Error: shellcheck not found: {e!s}")
-        print_err("Install shellcheck (https://github.com/koalaman/shellcheck)")
+        logger.error(f"Shellcheck check failed: {e!s}")
         return 1
 
-    with TemporaryDirectory() as temp_dir:
-        temp_dir_path = Path(temp_dir)
+    with TemporaryDirectory() as temp_dir_a:
+        temp_dir = Path(temp_dir_a)
         file_map = {}
+
+        logger.debug(f"Temporary directory path: {temp_dir!s}")
 
         for file in files:
             try:
                 with file.open("r") as stream:
                     data = yaml.safe_load(stream)
             except YAMLError as e:
-                error_message = str(e)
-                if error_message.index("\n"):
-                    error_message = "\n" + error_message
-                print_err(f"Error: Failed load yaml file '{file!s}': {error_message}")
+                error_message = str(e).replace("\n", "")
+                logger.error(f"Failed load yaml file '{file!s}': {error_message}")
                 return 1
             except OSError as e:
-                print_err(f"Error: Failed to read file '{file!s}': {e.strerror}")
+                logger.error(f"Failed to access '{file!s}': {e.strerror}")
                 return 1
 
+            logger.debug(f"Yaml data: {data!s}")
+
             if not isinstance(data, dict):
-                print_err(
-                    f"Error: Object type of '{file!s}' is '{type(data).__name__}', expected 'Dict'"
+                logger.error(
+                    f"Object type of '{file!s}' is '{type(data).__name__!s}', expected 'Dict'"
                 )
                 return 1
 
@@ -99,21 +112,30 @@ def cli(argv: list[str] = sys.argv[1:]) -> int:
                     for script_key, script in job.items():
                         if script_key in ["before_script", "script", "after_script"]:
                             id = uuid.uuid4()
-                            temp_file = temp_dir_path / str(id)
+                            temp_file = temp_dir / str(id)
+
+                            logger.debug(f"Temporary file path: {temp_file!s}")
+                            logger.debug(f"Script: {script}")
 
                             try:
                                 with temp_file.open("w") as tf:
                                     tf.write("\n".join(script))
                                     tf.flush()
                             except OSError as e:
-                                print_err(
-                                    f"Error: Failed to write file '{temp_file!s}': {e.strerror}",
+                                logger.error(
+                                    f"Failed to access '{file!s}': {e.strerror}"
                                 )
                                 return 1
 
-                            file_map[str(temp_file)] = f"{file}@{job_key}.{script_key}"
+                            mapping = f"{file}@{job_key}.{script_key}"
+                            file_map[str(temp_file)] = mapping
+                            logger.debug(f"File map entry: {temp_file!s} => {mapping}")
 
         shellcheck_files = set(file_map.keys())
+
+        if not shellcheck_files:
+            return 0
+
         cmd = [
             "shellcheck",
             f"-C{color}",
@@ -121,6 +143,8 @@ def cli(argv: list[str] = sys.argv[1:]) -> int:
             "--",
             *shellcheck_files,
         ]
+
+        logger.debug(f"Running command: {cmd}")
 
         process = subprocess.run(  # noqa: PLW1510
             cmd, shell=False, capture_output=True, universal_newlines=True, text=True

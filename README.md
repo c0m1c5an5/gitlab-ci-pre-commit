@@ -18,6 +18,9 @@ Feel free to create an issue, report a bug or suggest improvements in the "Issue
 # Hooks
 Use gitlab api to lint gitlab-ci files.
 
+Requirements (installed manually):
+- [pass](https://www.passwordstore.org)
+
 Requirements (installed automatically):
 - [python-gitlab](https://python-gitlab.readthedocs.io/en/stable)
 - [GitPython](https://github.com/gitpython-developers/GitPython)

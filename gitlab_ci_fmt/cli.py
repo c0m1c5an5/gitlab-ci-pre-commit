@@ -1,10 +1,15 @@
 import argparse
+import logging
+import os
 import sys
 from pathlib import Path
 from typing import List
 
-from gitlab_ci_fmt.exceptions import Error
-from gitlab_ci_fmt.utils import check_yq, format_gitlab_ci, print_err
+from gitlab_ci_fmt.exceptions import CommandError, MalformedError
+from gitlab_ci_fmt.utils import check_yq, format_gitlab_ci
+
+logging.basicConfig(format="%(levelname)s: %(filename)s:%(lineno)d %(message)s")
+logger = logging.getLogger(__name__)
 
 
 def cli(argv: List[str] = sys.argv[1:]) -> int:
@@ -14,43 +19,56 @@ def cli(argv: List[str] = sys.argv[1:]) -> int:
         argv (List[str], optional): Input arguments. Defaults to sys.argv[1:].
 
     Returns:
-        int: Return code
+        int: Return code.
     """
     parser = argparse.ArgumentParser(
-        description="Format gitlab-ci files.", prog=__package__
+        description="Format gitlab-ci files.",
+        prog="gitlab-ci-fmt",
     )
     parser.add_argument("files", nargs="+", type=Path, help="files to format")
+    parser.add_argument(
+        "-v", "--verbose", action="store_true", default=False, help="verbose output"
+    )
+
     args = parser.parse_args(argv)
 
     files: List[Path] = args.files
+    verbose: bool = args.verbose
+
+    if verbose or os.environ.get("DEBUG") not in [None, "false", "no", "0"]:
+        logger.setLevel(logging.DEBUG)
+
+    logger.debug(f"Args: {args._get_kwargs()}")
 
     try:
         check_yq()
-    except Error as e:
-        print_err(f"Error: yq not found: {e!s}")
-        print_err("Use yq v4.x.x (https://github.com/mikefarah/yq)")
+    except CommandError as e:
+        logger.error(f"yq check failed: {e!s}")
         return 1
 
     for file in files:
+        logger.debug(f"Formatting file: {file}")
         try:
             with file.open("r") as f:
                 source = f.read()
         except OSError as e:
-            print_err(f"Error: Failed to read file '{file!s}': {e.strerror}")
+            logger.error(f"Failed to access '{file!s}': {e.strerror}")
             return 1
 
         try:
             result = format_gitlab_ci(source)
-        except Error as e:
-            print_err(f"Error: Failed to format file '{file!s}': {e!s}")
+        except (CommandError, MalformedError) as e:
+            logger.error(f"Failed to format file '{file!s}': {e!s}")
             return 1
+
+        logger.debug(f"Formatting result:\n{result}")
 
         try:
             if result != source:
                 with file.open("w") as f:
                     f.write(result)
         except OSError as e:
-            print_err(f"Error: Failed to write file '{file!s}': {e.strerror}")
+            logger.error(f"Failed to access '{file!s}': {e.strerror}")
             return 1
 
     return 0
