@@ -1,3 +1,7 @@
+# ruff: noqa: PLR0911, PLR0912
+# PLR0911 Too many return statements
+# PLR0912 Too many branches
+
 import argparse
 import logging
 import os
@@ -5,7 +9,6 @@ import sys
 from pathlib import Path
 from typing import List
 
-from gitlab_ci_fmt.exceptions import CommandError, MalformedError
 from gitlab_ci_fmt.utils import check_yq, format_gitlab_ci
 
 logging.basicConfig(format="%(levelname)s: %(filename)s:%(lineno)d %(message)s")
@@ -42,8 +45,8 @@ def cli(argv: List[str] = sys.argv[1:]) -> int:
 
     try:
         check_yq()
-    except CommandError as e:
-        logger.error(f"yq check failed: {e!s}")
+    except Exception as e:
+        logger.error(f"yq check failed: {e!s}", exc_info=verbose)
         return 1
 
     for file in files:
@@ -52,13 +55,16 @@ def cli(argv: List[str] = sys.argv[1:]) -> int:
             with file.open("r") as f:
                 source = f.read()
         except OSError as e:
-            logger.error(f"Failed to access '{file!s}': {e.strerror}")
+            logger.error(f"Failed to access '{file!s}': {e.strerror}", exc_info=verbose)
+            return 1
+        except Exception as e:
+            logger.error(f"Failed to access '{file!s}': {e!s}", exc_info=verbose)
             return 1
 
         try:
             result = format_gitlab_ci(source)
-        except (CommandError, MalformedError) as e:
-            logger.error(f"Failed to format file '{file!s}': {e!s}")
+        except Exception as e:
+            logger.error(f"Failed to format file '{file!s}': {e!s}", exc_info=verbose)
             return 1
 
         logger.debug(f"Formatting result:\n{result}")
@@ -68,7 +74,10 @@ def cli(argv: List[str] = sys.argv[1:]) -> int:
                 with file.open("w") as f:
                     f.write(result)
         except OSError as e:
-            logger.error(f"Failed to access '{file!s}': {e.strerror}")
+            logger.error(f"Failed to access '{file!s}': {e.strerror}", exc_info=verbose)
+            return 1
+        except Exception as e:
+            logger.error(f"Failed to access '{file!s}': {e}", exc_info=verbose)
             return 1
 
     return 0

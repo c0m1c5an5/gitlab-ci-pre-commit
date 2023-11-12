@@ -12,15 +12,7 @@ from pathlib import Path
 from typing import List
 
 import git
-import git.exc
-import gitlab.exceptions
-import requests.exceptions
 
-from gitlab_ci_lint.exceptions import (
-    CommandError,
-    InvalidGitUrlError,
-    PassNotFoundError,
-)
 from gitlab_ci_lint.utils import (
     check_pass,
     get_access_token,
@@ -61,14 +53,14 @@ def cli(argv: list[str] = sys.argv[1:]) -> int:
 
     try:
         check_pass()
-    except PassNotFoundError as e:
-        logger.error(f"Pass check failed: {e!s}")
+    except Exception as e:
+        logger.error(f"Pass check failed: {e!s}", exc_info=verbose)
         return 1
 
     try:
         repo = git.Repo(Path.cwd(), search_parent_directories=True)
-    except git.exc.GitError as e:
-        logger.error(f"Failed to access git repo: {e!s}")
+    except Exception as e:
+        logger.error(f"Failed to access git repo: {e!s}", exc_info=verbose)
         return 1
 
     logger.debug(f"Repo: {repo.working_dir}")
@@ -76,15 +68,15 @@ def cli(argv: list[str] = sys.argv[1:]) -> int:
     try:
         origin = repo.remotes["origin"].url
     except IndexError:
-        logger.error("Repository does not have an 'origin' remote")
+        logger.error("Repository does not have an 'origin' remote", exc_info=verbose)
         return 1
 
     logger.debug(f"Origin url: {origin}")
 
     try:
         (gitlab_url, project_name) = remote_to_project(origin)
-    except InvalidGitUrlError as e:
-        logger.error(f"Failed to parse git url: {e!s}")
+    except Exception as e:
+        logger.error(f"Failed to parse git url: {e!s}", exc_info=verbose)
         return 1
 
     logger.debug(f"Gitlab URL: {gitlab_url}")
@@ -92,16 +84,16 @@ def cli(argv: list[str] = sys.argv[1:]) -> int:
 
     try:
         token = get_access_token(gitlab_url)
-    except CommandError as e:
-        logger.error(f"Failed to get access token: {e!s}")
+    except Exception as e:
+        logger.error(f"Failed to get access token: {e!s}", exc_info=verbose)
         return 1
 
     logger.debug(f"Access token: {token}")
 
     try:
         project = get_gitlab_project(gitlab_url, project_name, token)
-    except InvalidGitUrlError as e:
-        logger.error(f"Failed to access gitlab project: {e!s}")
+    except Exception as e:
+        logger.error(f"Failed to access gitlab project: {e!s}", exc_info=verbose)
         return 1
 
     for file in files:
@@ -110,18 +102,18 @@ def cli(argv: list[str] = sys.argv[1:]) -> int:
             with file.open("r") as src_file:
                 yml = src_file.read()
         except OSError as e:
-            logger.error(f"Failed to access '{file!s}': {e.strerror}")
+            logger.error(f"Failed to access '{file!s}': {e.strerror}", exc_info=verbose)
+            return 1
+        except Exception as e:
+            logger.error(f"Failed to access '{file!s}': {e!s}", exc_info=verbose)
             return 1
 
         try:
             lint_gitlab_api(project, yml)
-        except (
-            gitlab.exceptions.GitlabError,
-            requests.exceptions.RequestException,
-        ) as e:
-            logger.error(f"Linting of file '{file!s}' failed: {e!s}")
+        except Exception as e:
+            logger.error(f"Linting of file '{file!s}' failed: {e!s}", exc_info=verbose)
             return 1
         else:
-            logger.debug(f"Linting of file '{file}' successful")
+            logger.debug(f"Linting of file '{file}' successful", exc_info=verbose)
 
     return 0

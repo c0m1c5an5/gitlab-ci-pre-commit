@@ -20,6 +20,9 @@ gitlab-ci-shellcheck = "gitlab_ci_shellcheck.cli:cli"
 [tool.setuptools]
 packages = ["gitlab_ci_lint", "gitlab_ci_fmt", "gitlab_ci_shellcheck"]
 
+[tool.isort]
+profile = "black"
+
 [tool.ruff]
 pydocstyle.convention = "google"
 select = [

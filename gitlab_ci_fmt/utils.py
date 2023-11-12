@@ -1,9 +1,12 @@
 import json
+import logging
 import re
 import subprocess
 from subprocess import CalledProcessError
 
 from gitlab_ci_fmt.exceptions import CommandError, MalformedError, YqVersionError
+
+logger = logging.getLogger(__name__)
 
 YQ_RE = re.compile(
     r"yq \(https:\/\/github.com\/mikefarah\/yq\/\) version v4.(0|[1-9]\d*).(0|[1-9]\d*)"

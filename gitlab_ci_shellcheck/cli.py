@@ -17,7 +17,6 @@ from typing import List
 import yaml
 from yaml import YAMLError
 
-from gitlab_ci_shellcheck.exceptions import ShellcheckNotFoundError
 from gitlab_ci_shellcheck.utils import check_shellcheck
 
 logging.basicConfig(format="%(levelname)s: %(filename)s:%(lineno)d %(message)s")
@@ -77,15 +76,15 @@ def cli(argv: list[str] = sys.argv[1:]) -> int:
 
     try:
         check_shellcheck()
-    except ShellcheckNotFoundError as e:
-        logger.error(f"Shellcheck check failed: {e!s}")
+    except Exception as e:
+        logger.error(f"Shellcheck check failed: {e!s}", exc_info=verbose)
         return 1
 
     with TemporaryDirectory() as temp_dir_a:
         temp_dir = Path(temp_dir_a)
         file_map = {}
 
-        logger.debug(f"Temporary directory path: {temp_dir!s}")
+        logger.debug(f"Temporary directory path: {temp_dir!s}", exc_info=verbose)
 
         for file in files:
             try:
@@ -93,17 +92,26 @@ def cli(argv: list[str] = sys.argv[1:]) -> int:
                     data = yaml.safe_load(stream)
             except YAMLError as e:
                 error_message = str(e).replace("\n", "")
-                logger.error(f"Failed load yaml file '{file!s}': {error_message}")
+                logger.error(
+                    f"Failed load yaml file '{file!s}': {error_message}",
+                    exc_info=verbose,
+                )
                 return 1
             except OSError as e:
-                logger.error(f"Failed to access '{file!s}': {e.strerror}")
+                logger.error(
+                    f"Failed to access '{file!s}': {e.strerror}", exc_info=verbose
+                )
+                return 1
+            except Exception as e:
+                logger.error(f"Failed to access '{file!s}': {e!s}", exc_info=verbose)
                 return 1
 
             logger.debug(f"Yaml data: {data!s}")
 
             if not isinstance(data, dict):
                 logger.error(
-                    f"Object type of '{file!s}' is '{type(data).__name__!s}', expected 'Dict'"
+                    f"Object type of '{file!s}' is '{type(data).__name__!s}', expected 'Dict'",
+                    exc_info=verbose,
                 )
                 return 1
 
@@ -123,7 +131,14 @@ def cli(argv: list[str] = sys.argv[1:]) -> int:
                                     tf.flush()
                             except OSError as e:
                                 logger.error(
-                                    f"Failed to access '{file!s}': {e.strerror}"
+                                    f"Failed to access '{file!s}': {e.strerror}",
+                                    exc_info=verbose,
+                                )
+                                return 1
+                            except Exception as e:
+                                logger.error(
+                                    f"Failed to access '{file!s}': {e}",
+                                    exc_info=verbose,
                                 )
                                 return 1
 
