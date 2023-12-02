@@ -16,6 +16,8 @@ Feel free to create an issue, report a bug or suggest improvements in the "Issue
 
 
 # Hooks
+
+## gitlab-ci-lint
 Use gitlab api to lint gitlab-ci files.
 
 Requirements (installed manually):
@@ -26,13 +28,13 @@ Requirements (installed automatically):
 - [GitPython](https://github.com/gitpython-developers/GitPython)
 - [giturlparse](https://github.com/nephila/giturlparse)
 
-# gitlab-ci-fmt
+## gitlab-ci-fmt
 Ensure strict ordering of keywords in gitlab-ci configuration file.
 
 Requirements (installed manually):
 - [yq](https://github.com/mikefarah/yq)
 
-# gitlab-ci-shellcheck
+## gitlab-ci-shellcheck
 Use shellcheck to check job script sections.
 
 Requirements (installed manually):
