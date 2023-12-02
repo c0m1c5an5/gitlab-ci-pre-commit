@@ -1,5 +1,9 @@
-# Usage
-Usage in `.pre-commit-config.yaml`:
+gitlab-ci-tools
+================
+Gitlab CI pipeline lint, shellcheck and format tools. Standardize your code format and prevent mistakes before you commit.
+
+### Using gitlab-ci-tools with pre-commit
+Add this to your `.pre-commit-config.yaml`
 
 ```yaml
 - repo: https://github.com/c0m1c5an5/gitlab-ci-pre-commit
@@ -10,32 +14,20 @@ Usage in `.pre-commit-config.yaml`:
     - id: gitlab-ci-shellcheck
 ```
 
-# Issues and proposals
+### Hooks available
 
-Feel free to create an issue, report a bug or suggest improvements in the "Issues" section.
-
-
-# Hooks
-
-## gitlab-ci-lint
+#### `gitlab-ci-lint`
 Use gitlab api to lint gitlab-ci files.
+- Requires [pass](https://www.passwordstore.org) to be installed on your system as a secret backend so that your api key is stored encrypted.
 
-Requirements (installed manually):
-- [pass](https://www.passwordstore.org)
-
-Requirements (installed automatically):
-- [python-gitlab](https://python-gitlab.readthedocs.io/en/stable)
-- [GitPython](https://github.com/gitpython-developers/GitPython)
-- [giturlparse](https://github.com/nephila/giturlparse)
-
-## gitlab-ci-fmt
+#### `gitlab-ci-fmt`
 Ensure strict ordering of keywords in gitlab-ci configuration file.
+- Requires [yq](https://github.com/mikefarah/yq) to be installed on your system.
 
-Requirements (installed manually):
-- [yq](https://github.com/mikefarah/yq)
+#### `gitlab-ci-shellcheck`
+Use shellcheck to check all job script sections.
+- Requires [shellcheck](https://github.com/koalaman/shellcheck) to be installed on your system.
+- All script sections must contain shell markers (eg. '#shellcheck shell=bash')
 
-## gitlab-ci-shellcheck
-Use shellcheck to check job script sections.
-
-Requirements (installed manually):
-- [shellcheck](https://github.com/koalaman/shellcheck)
+# Issues and proposals
+Feel free to create an issue, report a bug or suggest improvements in the "Issues" section.
